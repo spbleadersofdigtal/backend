@@ -16,10 +16,11 @@ ALLOWED_HOSTS = [
     "0.0.0.0",
     "127.0.0.1",
     "192.168.83.181",
+    "192.168.22.4",
     "ed68-77-234-219-9.ngrok-free.app",
 ]
 CORS_ORIGIN_ALLOW_ALL = True
-CSRF_TRUSTED_ORIGINS = ["https://*.ngrok-free.app"]
+CSRF_TRUSTED_ORIGINS = ["https://*.ngrok-free.app", "http://192.168.83.181:8000"]
 
 # WhiteNoise
 # ------------------------------------------------------------------------------

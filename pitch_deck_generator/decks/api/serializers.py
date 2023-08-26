@@ -203,6 +203,22 @@ class AnswerSerializer(serializers.ModelSerializer):
                     raise serializers.ValidationError("Incorrect type")
                 if any([type(x) is not str for x in answer.values()]):
                     raise serializers.ValidationError("Incorrect type")
+            case "multiple_date_description":
+                if type(answer) is not dict:
+                    raise serializers.ValidationError("Incorrect type")
+                if not (params["min"] <= len(answer) <= params["max"]):
+                    raise serializers.ValidationError(
+                        "number of dates is too small or too large"
+                    )
+
+                for date in answer.keys():
+                    try:
+                        parse(date)
+                    except ValueError:
+                        raise serializers.ValidationError("Incorrect date type")
+                for val in answer.values():
+                    if type(val) is not str:
+                        raise serializers.ValidationError("Incorrect type")
 
         data["question_id"] = question.id
         data["deck_id"] = deck.id

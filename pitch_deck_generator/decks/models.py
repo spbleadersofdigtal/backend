@@ -32,6 +32,10 @@ class Question(models.Model):
         select = "select"
         link = "link"
         date = "date"
+        multiple_date_description = (
+            "multiple_date_description",
+            "multiple date description",
+        )
         photo = "photo"
         multiple_photo = "multiple_photo", "multiple photo"
         photo_description = "photo_description", "photo description"

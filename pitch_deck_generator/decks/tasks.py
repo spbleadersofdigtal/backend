@@ -1,13 +1,20 @@
+import tempfile
+
+import qrcode
 import requests
 from celery import shared_task
+from django.core.files import File
 
 from ml.openai_handle import create_hints, create_name_hint
 from pitch_deck_generator.decks.models import (
     PitchDeck,
     Question,
     QuestionAnswer,
+    QuestionAnswerPhoto,
     QuestionDeckHint,
 )
+
+ML_HOST = "https://short-peaches-speak.loca.lt/"
 
 data_types = {
     "names": ("text", 1),
@@ -25,7 +32,7 @@ data_types = {
     "money": ("text", 11),
     "financial_indicators": ("text", 33),
     "users_metrics": ("multiple_range", 12),
-    "aims": ("text", 15),
+    "aims": ("multiple_date_description", 15),
     "money_recieved": ("number", 16),
     "past_investors": ("text", 17),
     "how_much_investments": ("range", 18),
@@ -51,7 +58,7 @@ def run_pitch_deck_calculation(pk: int):
     generate_pitch_deck_name.apply_async(kwargs={"pk": pk})
     generate_known_values.apply_async(kwargs={"pk": pk})
     for i in range(3):
-        generate_batch_hints.apply_async(kwargs={"pk": pk, "num": i})
+        generate_batch_hints.apply_async(kwargs={"pk": pk, "num": i}, delay=1)
 
 
 @shared_task
@@ -69,47 +76,8 @@ def generate_pitch_deck_name(pk: int):
 @shared_task
 def generate_known_values(pk: int):
     pitch_deck = PitchDeck.objects.get(pk=pk)
-    _, question_id = data_types["category"]
-    QuestionDeckHint.objects.create(
-        question_id=question_id,
-        deck=pitch_deck,
-        hint={
-            "type": "select",
-            "value": [
-                "Business Software",
-                "IndustrialTech",
-                "E-commerce",
-                "Advertising & Marketing",
-                "Hardware",
-                "RetailTech",
-                "ConstructionTech",
-                "Web3",
-                "EdTech",
-                "Business Intelligence",
-                "Cybersecurity",
-                "HrTech",
-                "Telecom & Communication",
-                "Media & Entertainment",
-                "FinTech",
-                "MedTech",
-                "Transport & Logistics",
-                "Gaming",
-                "FoodTech",
-                "AI",
-                "WorkTech",
-                "Consumer Goods & Services",
-                "Aero & SpaceTech",
-                "Legal & RegTech",
-                "Travel",
-                "PropTech",
-                "Energy",
-                "GreenTech",
-            ],
-        },
-    )
-
     req = requests.post(
-        "https://rare-needles-lead.loca.lt/search",
+        ML_HOST + "search",
         json={"body": pitch_deck.description},
     )
     data = req.json()
@@ -122,14 +90,28 @@ def generate_known_values(pk: int):
 @shared_task
 def generate_batch_hints(pk: int, num: int):
     pitch_deck = PitchDeck.objects.get(pk=pk)
-    data = create_hints(pitch_deck.description, num)
+    try:
+        data = create_hints(pitch_deck.description, num)
+    except Exception as e:
+        print(e)
+        data = create_hints(pitch_deck.description, num)
     for el in data:
         question_type, question_id = data_types[el["type"]]
-        QuestionDeckHint.objects.create(
-            question_id=question_id,
-            deck=pitch_deck,
-            hint={"type": question_type, "value": el["value"]},
-        )
+        if el["type"] == "aims":
+            dates = {}
+            for e in el["value"]:
+                dates[e["date"]] = e["aim"]
+            QuestionDeckHint.objects.create(
+                question_id=question_id,
+                deck=pitch_deck,
+                hint={"type": question_type, "value": dates},
+            )
+        else:
+            QuestionDeckHint.objects.create(
+                question_id=question_id,
+                deck=pitch_deck,
+                hint={"type": question_type, "value": el["value"]},
+            )
 
 
 @shared_task
@@ -144,7 +126,7 @@ def generate_numeric_values(pk: int):
             category = q.first().answer
             type = q2.first().answer
             req = requests.post(
-                "https://rare-needles-lead.loca.lt/numeric",
+                ML_HOST + "numeric",
                 json={
                     "description": pitch_deck.description,
                     "category": category,
@@ -159,3 +141,28 @@ def generate_numeric_values(pk: int):
                     deck=pitch_deck,
                     hint={"type": question_type, "value": el["value"]},
                 )
+
+
+@shared_task
+def save_answer_to_deck(pk: int):
+    qa = QuestionAnswer.objects.get(pk=pk)
+    question = qa.question
+    deck = qa.deck
+    deck.questions[question.inner_tag] = {
+        "answer": qa.answer,
+        "photos": [x.file.url for x in qa.photos.all()],
+    }
+    deck.save()
+
+
+@shared_task
+def qenerate_answer_qr(pk: int):
+    qa = QuestionAnswer.objects.get(pk=pk)
+    link = qa.answer
+    img = qrcode.make(link)
+    with tempfile.NamedTemporaryFile() as tmp:
+        img.save(tmp.name)
+        QuestionAnswerPhoto.objects.create(
+            answer=qa,
+            file=File(tmp, name="qr.png"),
+        )
