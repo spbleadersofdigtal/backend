@@ -26,18 +26,24 @@ class Question(models.Model):
     class QuestionType(models.TextChoices):
         text = "text"
         number = "number"
-        text_array = "text_array"
+        text_array = "text_array", "text array"
         range = "range"
-        multiple_range = "multiple_range"
+        multiple_range = "multiple_range", "multiple range"
         select = "select"
         link = "link"
         date = "date"
         photo = "photo"
-        multiple_photo = "multiple_photo"
-        photo_description = "photo_description"
-        multiple_link_description = "multiple link description"
-        multiple_photo_description = "multiple photo description"
-        multiple_links = "multiple_links"
+        multiple_photo = "multiple_photo", "multiple photo"
+        photo_description = "photo_description", "photo description"
+        multiple_link_description = (
+            "multiple_link_description",
+            "multiple link description",
+        )
+        multiple_photo_description = (
+            "multiple_photo_description",
+            "multiple photo description",
+        )
+        multiple_links = "multiple_links", "multiple links"
 
     order = models.IntegerField(unique=True)
     text = models.CharField(max_length=300)
@@ -65,7 +71,7 @@ class QuestionDeckHint(models.Model):
 
 
 class QuestionAnswer(models.Model):
-    deck = models.FloatField("PitchDeck")
+    deck = models.ForeignKey("PitchDeck", on_delete=models.CASCADE)
     question = models.ForeignKey("Question", on_delete=models.CASCADE)
     answer = models.JSONField(default=dict)
 

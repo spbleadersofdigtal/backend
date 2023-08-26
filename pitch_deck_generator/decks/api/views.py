@@ -1,13 +1,16 @@
-from rest_framework import generics
+from rest_framework import generics, status
 from rest_framework.generics import get_object_or_404
 from rest_framework.response import Response
+from rest_framework.parsers import JSONParser, FormParser, MultiPartParser
 
 from pitch_deck_generator.decks.api.serializers import (
     BasePitchDeckSerializer,
     PitchDeckSerializer,
-    QuestionSerializer, HintSerializer,
+    QuestionSerializer,
+    HintSerializer,
+    AnswerSerializer,
 )
-from pitch_deck_generator.decks.models import PitchDeck
+from pitch_deck_generator.decks.models import PitchDeck, QuestionDeckHint, Question
 
 
 class ListDecksApiView(generics.ListCreateAPIView):
@@ -22,22 +25,48 @@ class RetrievePitchApiView(generics.RetrieveAPIView):
         return get_object_or_404(PitchDeck, id=self.kwargs["id"])
 
 
-class GetFirstQuestionApiView(generics.GenericAPIView):
+class GetFirstQuestionApiView(generics.RetrieveAPIView):
     serializer_class = QuestionSerializer
 
-    def get(self, request, *args, **kwargs):
-        return Response()
+    def get_object(self):
+        return Question.objects.get(order=1)
 
 
-class GetDeckQuestionApiView(generics.GenericAPIView):
+class GetDeckQuestionApiView(generics.RetrieveAPIView):
     serializer_class = QuestionSerializer
 
-    def get(self, request, *args, **kwargs):
-        return Response()
+    def get_object(self):
+        return get_object_or_404(Question, id=self.kwargs["question_id"])
+
+
+class CreateQuestionAnswerApiView(generics.CreateAPIView):
+    serializer_class = AnswerSerializer
+
+    def create(self, request, *args, **kwargs):
+        # main thing starts
+        file_fields = list(request.FILES.keys())  # list to be passed to the serializer
+        serializer = self.get_serializer(data=request.data, file_fields=file_fields)
+        # main thing ends
+
+        serializer.is_valid(raise_exception=True)
+        self.perform_create(serializer)
+        headers = self.get_success_headers(serializer.data)
+        return Response(
+            serializer.data, status=status.HTTP_201_CREATED, headers=headers
+        )
 
 
 class GetDeckQuestionHintApiView(generics.GenericAPIView):
     serializer_class = HintSerializer
+    parser_classes = [JSONParser, FormParser, MultiPartParser]
 
     def get(self, request, *args, **kwargs):
-        return Response()
+        hint = get_object_or_404(
+            QuestionDeckHint,
+            question_id=self.kwargs["question_id"],
+            deck_id=self.kwargs["deck_id"],
+        )
+        data = hint.hint
+        if data:
+            return Response(data)
+        return Response(status=404)

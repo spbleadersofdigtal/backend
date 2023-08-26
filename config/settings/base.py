@@ -351,4 +351,4 @@ SPECTACULAR_SETTINGS = {
     ],
 }
 
-OPENAI_KEY = env("OPENAI_KEY")
+OPENAI_KEY = env("OPENAI_KEY", default="")
