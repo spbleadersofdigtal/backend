@@ -1,7 +1,7 @@
 import requests
 from celery import shared_task
 
-from ml.openai_handle import create_name_hint, create_hints
+from ml.openai_handle import create_hints, create_name_hint
 from pitch_deck_generator.decks.models import PitchDeck, Question, QuestionDeckHint
 
 data_types = {

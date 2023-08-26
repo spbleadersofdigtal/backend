@@ -48,6 +48,7 @@ django-coverage-plugin = "^3.0.0"
 pytest-django = "^4.5.2"
 sentry-sdk = "^1.12.0"
 openai = "^0.27.9"
+isort = "5.11.5"
 
 
 [build-system]

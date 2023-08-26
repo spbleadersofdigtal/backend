@@ -7,9 +7,9 @@ from rest_framework.generics import get_object_or_404
 from pitch_deck_generator.decks.models import (
     PitchDeck,
     Question,
-    QuestionDeckHint,
     QuestionAnswer,
     QuestionAnswerPhoto,
+    QuestionDeckHint,
 )
 
 

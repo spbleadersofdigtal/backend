@@ -1,16 +1,16 @@
 from rest_framework import generics, status
 from rest_framework.generics import get_object_or_404
+from rest_framework.parsers import FormParser, JSONParser, MultiPartParser
 from rest_framework.response import Response
-from rest_framework.parsers import JSONParser, FormParser, MultiPartParser
 
 from pitch_deck_generator.decks.api.serializers import (
+    AnswerSerializer,
     BasePitchDeckSerializer,
+    HintSerializer,
     PitchDeckSerializer,
     QuestionSerializer,
-    HintSerializer,
-    AnswerSerializer,
 )
-from pitch_deck_generator.decks.models import PitchDeck, QuestionDeckHint, Question
+from pitch_deck_generator.decks.models import PitchDeck, Question, QuestionDeckHint
 
 
 class ListDecksApiView(generics.ListCreateAPIView):

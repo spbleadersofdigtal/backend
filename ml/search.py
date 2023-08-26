@@ -1,6 +1,7 @@
+import pickle
+
 from annoy import AnnoyIndex
 from sentence_transformers import SentenceTransformer
-import pickle
 
 model = None
 data = None

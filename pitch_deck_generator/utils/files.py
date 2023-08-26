@@ -1,6 +1,6 @@
 import os
-
 from io import BytesIO
+
 from PIL import Image
 
 from pitch_deck_generator.users.models import User
