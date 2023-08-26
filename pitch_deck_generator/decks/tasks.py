@@ -13,8 +13,9 @@ from pitch_deck_generator.decks.models import (
     QuestionAnswerPhoto,
     QuestionDeckHint,
 )
+from pitch_deck_generator.decks.services import get_image_mokeup
 
-ML_HOST = "https://purple-kids-drive.loca.lt/"
+ML_HOST = "https://forty-eggs-slide.loca.lt/"
 
 data_types = {
     "names": ("text", 1),
@@ -166,3 +167,13 @@ def qenerate_answer_qr(pk: int):
             answer=qa,
             file=File(tmp, name="qr.png"),
         )
+
+
+@shared_task
+def create_images_mokups(pk: int):
+    qa = QuestionAnswer.objects.get(pk=pk)
+    for image in qa.photos.all():
+        mokup_path = get_image_mokeup(image.file.path)
+        with open(mokup_path, "rb") as f:
+            image.file = File(f, name="mokup.png")
+            image.save()

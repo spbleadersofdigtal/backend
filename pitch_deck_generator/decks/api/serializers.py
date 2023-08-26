@@ -5,6 +5,7 @@ from rest_framework import serializers
 from rest_framework.generics import get_object_or_404
 
 from pitch_deck_generator.decks.models import (
+    PdfToPPTXStorage,
     PitchDeck,
     Question,
     QuestionAnswer,
@@ -40,11 +41,17 @@ class HintSerializer(serializers.Serializer):
 class PresentationAnswerSerializer(serializers.Serializer):
     slug = serializers.CharField()
     answer = serializers.JSONField()
+    photos = serializers.ListSerializer(child=serializers.ImageField())
+
+
+class PitchDeckSlidePresentationSerializer(serializers.Serializer):
+    slide = serializers.IntegerField()
+    data = PresentationAnswerSerializer(many=True)
 
 
 class PitchDeckPresentationSerializer(serializers.Serializer):
-    slide = serializers.IntegerField()
-    data = PresentationAnswerSerializer(many=True)
+    deck = BasePitchDeckSerializer()
+    slide = PitchDeckSlidePresentationSerializer(many=True)
 
 
 class QuestionSerializer(serializers.ModelSerializer):
@@ -100,7 +107,7 @@ class AnswerSerializer(serializers.ModelSerializer):
         }
 
     def validate(self, data):
-        answer = data["answer"]
+        answer = data["answer"] if "answer" in data else None
         question = get_object_or_404(
             Question, id=self.context["view"].kwargs["question_id"]
         )
@@ -168,7 +175,7 @@ class AnswerSerializer(serializers.ModelSerializer):
                 if answer:
                     raise serializers.ValidationError("Answer should be blank")
                 for key, value in data.items():
-                    if isinstance(value, InMemoryUploadedFile):
+                    if isinstance(value, (TemporaryUploadedFile, InMemoryUploadedFile)):
                         if "_" not in key:
                             raise serializers.ValidationError(
                                 "You should use file_num for file keys"
@@ -198,7 +205,7 @@ class AnswerSerializer(serializers.ModelSerializer):
                 len_f = 0
 
                 for key, value in data.items():
-                    if isinstance(value, TemporaryUploadedFile):
+                    if isinstance(value, (TemporaryUploadedFile, InMemoryUploadedFile)):
                         if "_" not in key:
                             raise serializers.ValidationError(
                                 "You should use file_num for file keys"
@@ -247,19 +254,27 @@ class AnswerSerializer(serializers.ModelSerializer):
         q = QuestionAnswer.objects.get_or_create(
             deck_id=validated_data["deck_id"], question_id=validated_data["question_id"]
         )[0]
-        q.answer = validated_data["answer"]
+        q.answer = validated_data["answer"] if "answer" in validated_data else {}
         q.save()
 
         s = [
             key
             for key, val in validated_data.items()
-            if isinstance(val, TemporaryUploadedFile) and key != "file"
+            if isinstance(val, (TemporaryUploadedFile, InMemoryUploadedFile))
+            and key != "file"
         ]
         if "file" in validated_data:
             QuestionAnswerPhoto.objects.create(answer=q, file=validated_data["file"])
-        elif s:
+        if s:
             s.sort(key=lambda x: int(x.split("_")[1]))
             for key in s:
                 QuestionAnswerPhoto.objects.create(answer=q, file=validated_data[key])
 
         return q
+
+
+class PdfToPPTXSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = PdfToPPTXStorage
+        fields = ["pdf", "pptx"]
+        extra_kwargs = {"pptx": {"read_only": True}}

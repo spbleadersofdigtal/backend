@@ -1,6 +1,7 @@
 from django.urls import path
 
 from pitch_deck_generator.decks.api.views import (
+    ConvertPdfToPPTXApiView,
     CreateQuestionAnswerApiView,
     GetDeckPresentationDataApiView,
     GetDeckQuestionApiView,
@@ -15,6 +16,7 @@ app_name = "decks"
 urlpatterns = [
     path("", ListDecksApiView.as_view()),
     path("<int:id>", RetrievePitchApiView.as_view()),
+    path("pdf-to-pptx", ConvertPdfToPPTXApiView.as_view()),
     path(
         "question/<int:deck_id>/presentation", GetDeckPresentationDataApiView.as_view()
     ),

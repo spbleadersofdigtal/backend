@@ -85,3 +85,8 @@ class QuestionAnswerPhoto(models.Model):
         "QuestionAnswer", related_name="photos", on_delete=models.CASCADE
     )
     file = models.ImageField(upload_to="uploads/")
+
+
+class PdfToPPTXStorage(models.Model):
+    pdf = models.FileField(upload_to="pdf/")
+    pptx = models.FileField(upload_to="pptx/", blank=True, null=True)

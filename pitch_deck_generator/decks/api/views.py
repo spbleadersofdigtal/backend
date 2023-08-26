@@ -7,6 +7,7 @@ from pitch_deck_generator.decks.api.serializers import (
     AnswerSerializer,
     BasePitchDeckSerializer,
     HintSerializer,
+    PdfToPPTXSerializer,
     PitchDeckPresentationSerializer,
     PitchDeckSerializer,
     QuestionSerializer,
@@ -74,6 +75,7 @@ class GetDeckQuestionHintApiView(generics.GenericAPIView):
 
 
 class GetDeckPresentationDataApiView(generics.GenericAPIView):
+    queryset = PitchDeck.objects.none()
     serializer_class = PitchDeckPresentationSerializer
 
     structure = {
@@ -84,7 +86,7 @@ class GetDeckPresentationDataApiView(generics.GenericAPIView):
         5: ["market_values", "users"],
         6: ["competitors", "competitors_strength", "competitors_low", "advantages"],
         7: ["money", "finance_model"],
-        8: ["how_much_investments", "financial_indicators"],
+        8: ["how_much_investments", "financial_indicators", "users_metrics"],
         9: ["your_role", "your_teammates", "past_investors"],
         10: ["how_much_investments", "time_to_spend", "investments_sold"],
         11: ["company_value", "future_value", "time_to_spend"],
@@ -97,14 +99,27 @@ class GetDeckPresentationDataApiView(generics.GenericAPIView):
             PitchDeck,
             id=self.kwargs["deck_id"],
         )
+        re_data = {
+            "deck": BasePitchDeckSerializer().to_representation(deck),
+        }
         resp = []
         data = deck.questions
         for slide, tags in self.structure.items():
             slide_data = {"slide": slide, "data": []}
             for tag in tags:
-                slide_data["data"].append(
-                    {"slug": tag, "answer": data[tag] if tag in data else {}}
-                )
-            resp.append(slide_data)
+                b_data = {}
+                if tag in data:
+                    if "answer" in data[tag]:
+                        b_data["answer"] = data[tag]["answer"]
+                    if "photos" in data[tag]:
+                        b_data["photos"] = data[tag]["photos"]
 
-        return Response(resp)
+                slide_data["data"].append({"slug": tag, **b_data})
+            resp.append(slide_data)
+        re_data["slides"] = resp
+        return Response(re_data)
+
+
+class ConvertPdfToPPTXApiView(generics.CreateAPIView):
+    serializer_class = PdfToPPTXSerializer
+    parser_classes = [FormParser, MultiPartParser]
