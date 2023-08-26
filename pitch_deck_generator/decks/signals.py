@@ -29,7 +29,7 @@ def question_answer_create(sender, instance: QuestionAnswer, created, **kwargs):
 
 
 @receiver(pre_save, sender=QuestionAnswer)
-def question_answer_update(sender, instance: QuestionAnswer, created, **kwargs):
+def question_answer_update(sender, instance: QuestionAnswer, **kwargs):
     if instance.id:
         if instance.question.inner_tag == "category":
             generate_numeric_values.apply_async(

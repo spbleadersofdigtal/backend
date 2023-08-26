@@ -7,6 +7,7 @@ from pitch_deck_generator.decks.api.serializers import (
     AnswerSerializer,
     BasePitchDeckSerializer,
     HintSerializer,
+    PitchDeckPresentationSerializer,
     PitchDeckSerializer,
     QuestionSerializer,
 )
@@ -70,3 +71,40 @@ class GetDeckQuestionHintApiView(generics.GenericAPIView):
         if data:
             return Response(data)
         return Response(status=404)
+
+
+class GetDeckPresentationDataApiView(generics.GenericAPIView):
+    serializer_class = PitchDeckPresentationSerializer
+
+    structure = {
+        1: ["names", "type"],
+        2: ["problems"],
+        3: ["actuality", "awards"],
+        4: ["solve", "works"],
+        5: ["market_values", "users"],
+        6: ["competitors", "competitors_strength", "competitors_low", "advantages"],
+        7: ["money", "finance_model"],
+        8: ["how_much_investments", "financial_indicators"],
+        9: ["your_role", "your_teammates", "past_investors"],
+        10: ["how_much_investments", "time_to_spend", "investments_sold"],
+        11: ["company_value", "future_value", "time_to_spend"],
+        12: ["aims"],
+        13: ["images"],
+    }
+
+    def get(self, request, *args, **kwargs):
+        deck = get_object_or_404(
+            PitchDeck,
+            id=self.kwargs["deck_id"],
+        )
+        resp = []
+        data = deck.questions
+        for slide, tags in self.structure.items():
+            slide_data = {"slide": slide, "data": []}
+            for tag in tags:
+                slide_data["data"].append(
+                    {"slug": tag, "answer": data[tag] if tag in data else {}}
+                )
+            resp.append(slide_data)
+
+        return Response(resp)

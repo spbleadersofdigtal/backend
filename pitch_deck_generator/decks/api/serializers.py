@@ -37,6 +37,16 @@ class HintSerializer(serializers.Serializer):
     value = serializers.JSONField()
 
 
+class PresentationAnswerSerializer(serializers.Serializer):
+    slug = serializers.CharField()
+    answer = serializers.JSONField()
+
+
+class PitchDeckPresentationSerializer(serializers.Serializer):
+    slide = serializers.IntegerField()
+    data = PresentationAnswerSerializer(many=True)
+
+
 class QuestionSerializer(serializers.ModelSerializer):
     hint = serializers.SerializerMethodField(method_name="get_hint")
     next_id = serializers.SerializerMethodField(method_name="get_next_id")
@@ -105,7 +115,7 @@ class AnswerSerializer(serializers.ModelSerializer):
                     if len(answer) > params["max_length"]:
                         raise serializers.ValidationError("Text is too long")
             case "number":
-                if type(answer) is not str:
+                if type(answer) is not int:
                     raise serializers.ValidationError("Incorrect type")
             case "text_array":
                 if type(answer) is not list:
@@ -115,6 +125,8 @@ class AnswerSerializer(serializers.ModelSerializer):
                     raise serializers.ValidationError("Incorrect type")
             case "range":
                 slug = params["slug"]
+                if type(answer) is not dict:
+                    raise serializers.ValidationError("Incorrect type")
                 if slug not in answer:
                     raise serializers.ValidationError("Value to found")
                 if not isinstance(answer[slug], (int, float)):
@@ -122,12 +134,19 @@ class AnswerSerializer(serializers.ModelSerializer):
                 if not (params["min_value"] <= answer[slug] <= params["max_value"]):
                     raise serializers.ValidationError("Number is too big or too small")
             case "multiple_range":
-                for slug in [x["slug"] for x in params["scrollbars"]]:
+                scrollbars = {}
+                for el in params["scrollbars"]:
+                    scrollbars[el["slug"]] = el
+                for slug in scrollbars.keys():
                     if slug not in answer:
                         raise serializers.ValidationError(f"Value {slug} to found")
                     if not isinstance(answer[slug], (int, float)):
                         raise serializers.ValidationError(f"Incorrect {slug} type")
-                    if not (params["min_value"] <= answer[slug] <= params["max_value"]):
+                    if not (
+                        scrollbars[slug]["min_value"]
+                        <= answer[slug]
+                        <= scrollbars[slug]["max_value"]
+                    ):
                         raise serializers.ValidationError(
                             f"Number is too big or too small for {slug}"
                         )

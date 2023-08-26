@@ -14,7 +14,7 @@ from pitch_deck_generator.decks.models import (
     QuestionDeckHint,
 )
 
-ML_HOST = "https://short-peaches-speak.loca.lt/"
+ML_HOST = "https://purple-kids-drive.loca.lt/"
 
 data_types = {
     "names": ("text", 1),
