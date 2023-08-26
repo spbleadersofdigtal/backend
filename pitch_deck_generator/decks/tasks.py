@@ -2,7 +2,12 @@ import requests
 from celery import shared_task
 
 from ml.openai_handle import create_hints, create_name_hint
-from pitch_deck_generator.decks.models import PitchDeck, Question, QuestionDeckHint
+from pitch_deck_generator.decks.models import (
+    PitchDeck,
+    Question,
+    QuestionAnswer,
+    QuestionDeckHint,
+)
 
 data_types = {
     "names": ("text", 1),
@@ -125,3 +130,32 @@ def generate_batch_hints(pk: int, num: int):
             deck=pitch_deck,
             hint={"type": question_type, "value": el["value"]},
         )
+
+
+@shared_task
+def generate_numeric_values(pk: int):
+    pitch_deck = PitchDeck.objects.get(pk=pk)
+    if q := QuestionAnswer.objects.filter(
+        question__inner_tag="category", deck=pitch_deck
+    ):
+        if q2 := QuestionAnswer.objects.filter(
+            question__inner_tag="type", deck=pitch_deck
+        ):
+            category = q.first().answer
+            type = q2.first().answer
+            req = requests.post(
+                "https://rare-needles-lead.loca.lt/numeric",
+                json={
+                    "description": pitch_deck.description,
+                    "category": category,
+                    "type": type,
+                },
+            )
+            data = req.json()
+            for el in data:
+                question_type, question_id = data_types[el["type"]]
+                QuestionDeckHint.objects.create(
+                    question_id=question_id,
+                    deck=pitch_deck,
+                    hint={"type": question_type, "value": el["value"]},
+                )

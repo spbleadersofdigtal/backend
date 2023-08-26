@@ -226,4 +226,5 @@ class AnswerSerializer(serializers.ModelSerializer):
             s.sort(key=lambda x: int(x.split("_")[1]))
             for key in s:
                 QuestionAnswerPhoto.objects.create(answer=q, file=validated_data[key])
+
         return q
