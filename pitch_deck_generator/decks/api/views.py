@@ -91,7 +91,7 @@ class GetDeckPresentationDataApiView(generics.GenericAPIView):
         10: ["how_much_investments", "time_to_spend", "investments_sold"],
         11: ["company_value", "future_value", "time_to_spend"],
         12: ["aims"],
-        13: ["images"],
+        13: ["images", "links"],
     }
 
     def get(self, request, *args, **kwargs):

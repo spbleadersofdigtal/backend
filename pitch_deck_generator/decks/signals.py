@@ -34,7 +34,7 @@ def question_answer_create(sender, instance: QuestionAnswer, created, **kwargs):
                 kwargs={"pk": instance.deck.pk}, countdown=1
             )
         elif instance.question.inner_tag == "names":
-            instance.deck.name = instance.answer
+            instance.deck.name = instance.answer if instance.answer else None
             instance.deck.save()
         elif instance.question.inner_tag in ["finance_model"]:
             qenerate_answer_qr.apply_async(kwargs={"pk": instance.pk}, countdown=5)
@@ -50,6 +50,9 @@ def question_answer_update(sender, instance: QuestionAnswer, **kwargs):
             generate_numeric_values.apply_async(
                 kwargs={"pk": instance.deck.pk}, countdown=1
             )
+        elif instance.question.inner_tag == "names":
+            instance.deck.name = instance.answer if instance.answer else None
+            instance.deck.save()
         elif instance.question.inner_tag in ["finance_model"]:
             qenerate_answer_qr.apply_async(kwargs={"pk": instance.pk}, countdown=5)
         elif instance.question.inner_tag == "images":

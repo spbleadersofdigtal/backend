@@ -11,6 +11,7 @@ class PitchDeck(models.Model):
 
     # generated info
     logo = models.ImageField(upload_to="logos/", null=True, blank=True)
+    images = models.JSONField(null=True)
     styles = models.FileField(upload_to="styles/", null=True, blank=True)
     presentation = models.FileField(upload_to="logos/", null=True, blank=True)
     meta_info = models.JSONField(default=dict, null=True, blank=True)

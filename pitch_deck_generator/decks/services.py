@@ -15,7 +15,7 @@ def get_image_mokeup(image_path):
         )
     else:
         q = mockup.generate(
-            template_id=mockup.templates[0].id,
+            template_id="d95345535d98fcc6f4030e1d3ca62052",
             screenshot_path=image_path,
             color=mockup.templates[0].colors[0].color,
         )

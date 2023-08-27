@@ -15,7 +15,7 @@ from pitch_deck_generator.decks.models import (
 )
 from pitch_deck_generator.decks.services import get_image_mokeup
 
-ML_HOST = "https://forty-eggs-slide.loca.lt/"
+ML_HOST = "https://small-teeth-own.loca.lt/"
 
 data_types = {
     "names": ("text", 1),
@@ -56,10 +56,11 @@ data_types = {
 
 @shared_task
 def run_pitch_deck_calculation(pk: int):
-    generate_pitch_deck_name.apply_async(kwargs={"pk": pk})
-    generate_known_values.apply_async(kwargs={"pk": pk})
+    generate_pitch_deck_name.apply_async(kwargs={"pk": pk}, countdown=1)
+    generate_known_values.apply_async(kwargs={"pk": pk}, countdown=1)
     for i in range(3):
-        generate_batch_hints.apply_async(kwargs={"pk": pk, "num": i}, delay=1)
+        generate_batch_hints.apply_async(kwargs={"pk": pk, "num": i}, countdown=1)
+    generate_pitch_deck_images.apply_async(kwargs={"pk": pk}, countdown=1)
 
 
 @shared_task
@@ -75,12 +76,26 @@ def generate_pitch_deck_name(pk: int):
 
 
 @shared_task
+def generate_pitch_deck_images(pk: int):
+    pitch_deck = PitchDeck.objects.get(pk=pk)
+    req = requests.post(
+        ML_HOST + "img-search",
+        json={"body": pitch_deck.description},
+    )
+    print(req.text)
+    data = req.json()
+    pitch_deck.images = data
+    pitch_deck.save()
+
+
+@shared_task
 def generate_known_values(pk: int):
     pitch_deck = PitchDeck.objects.get(pk=pk)
     req = requests.post(
         ML_HOST + "search",
         json={"body": pitch_deck.description},
     )
+    print(req.text)
     data = req.json()
     _, question_id = data_types["competitors"]
     QuestionDeckHint.objects.create(
@@ -134,6 +149,7 @@ def generate_numeric_values(pk: int):
                     "type": type,
                 },
             )
+            print(req.text)
             data = req.json()
             for el in data:
                 question_type, question_id = data_types[el["type"]]

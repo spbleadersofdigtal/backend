@@ -17,11 +17,12 @@ from pitch_deck_generator.decks.models import (
 class BasePitchDeckSerializer(serializers.ModelSerializer):
     class Meta:
         model = PitchDeck
-        fields = ["id", "name", "description", "logo", "created", "updated"]
+        fields = ["id", "name", "description", "logo", "created", "images", "updated"]
         extra_kwargs = {
             "id": {"read_only": True},
             "logo": {"read_only": True},
             "name": {"read_only": True},
+            "images": {"read_only": True},
             "created": {"read_only": True},
             "updated": {"read_only": True},
         }
@@ -138,8 +139,8 @@ class AnswerSerializer(serializers.ModelSerializer):
                     raise serializers.ValidationError("Value to found")
                 if not isinstance(answer[slug], (int, float)):
                     raise serializers.ValidationError("Incorrect type")
-                if not (params["min_value"] <= answer[slug] <= params["max_value"]):
-                    raise serializers.ValidationError("Number is too big or too small")
+                # if not (params["min_value"] <= answer[slug] <= params["max_value"]):
+                #     raise serializers.ValidationError("Number is too big or too small")
             case "multiple_range":
                 scrollbars = {}
                 for el in params["scrollbars"]:
@@ -149,14 +150,14 @@ class AnswerSerializer(serializers.ModelSerializer):
                         raise serializers.ValidationError(f"Value {slug} to found")
                     if not isinstance(answer[slug], (int, float)):
                         raise serializers.ValidationError(f"Incorrect {slug} type")
-                    if not (
-                        scrollbars[slug]["min_value"]
-                        <= answer[slug]
-                        <= scrollbars[slug]["max_value"]
-                    ):
-                        raise serializers.ValidationError(
-                            f"Number is too big or too small for {slug}"
-                        )
+                    # if not (
+                    #     scrollbars[slug]["min_value"]
+                    #     <= answer[slug]
+                    #     <= scrollbars[slug]["max_value"]
+                    # ):
+                    #     raise serializers.ValidationError(
+                    #         f"Number is too big or too small for {slug}"
+                    #     )
             case "select":
                 if answer not in params["options"]:
                     raise serializers.ValidationError("No such option")

@@ -112,8 +112,8 @@ def create_hints(description: str, stage: int):
         ].group()
         if not len(filtered_content):
             raise ValueError(f"answer doesnt pass validation, {filtered_content}")
-    except:
-        raise ValueError(f"answer doesnt pass validation, {filtered_content}")
+    except Exception:
+        print(f"answer doesnt pass validation")
     content = literal_eval(filtered_content)
     for assertion_statement in assertions[stage]:
         assert assertion_statement(content)
