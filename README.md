@@ -1,5 +1,9 @@
 # Pitch Deck Generator
 
+```shell
+$ docker-compose -f local.yml up
+```
+
 
 ## Basic Commands
 
